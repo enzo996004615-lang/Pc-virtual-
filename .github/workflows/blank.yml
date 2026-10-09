@@ -1,0 +1,99 @@
+{
+  "name": "PC Virtual Ultra",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb",
+    "storage": "64gb"
+  },
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": {
+      "label": "PC Virtual Desktop",
+      "visibility": "private",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "remoteUser": "vscode",
+  "overrideCommand": false
+}#!/usr/bin/env bash
+set -euo pipefail
+
+export DISPLAY=:0
+mkdir -p "$HOME/.cache/pc-virtual"
+
+if ! pgrep -x Xvfb >/dev/null; then
+  Xvfb :0 -screen 0 1920x1080x24 -ac &
+  sleep 3
+fi
+
+if ! pgrep -f "xfce4-session" >/dev/null; then
+  dbus-launch --exit-with-session startxfce4 \
+    >"$HOME/.cache/pc-virtual/desktop.log" 2>&1 &
+  sleep 3
+fi
+
+if ! pgrep -x x11vnc >/dev/null; then
+  x11vnc \
+    -display :0 \
+    -forever \
+    -shared \
+    -nopw \
+    -listen 127.0.0.1 \
+    -rfbport 5900 &
+fi
+
+if ! pgrep -f "websockify.*6080" >/dev/null; then
+  websockify \
+    --web=/usr/share/novnc \
+    6080 \
+    127.0.0.1:5900 &
+fi
+
+echo "PC Virtual Ultra iniciado."
+echo "Desktop: porta privada 6080."
+echo "Terminal: abra um novo terminal no Codespaces."
+
+wait
+#!/usr/bin/env bash
+set -euo pipefail
+
+export DISPLAY=:0
+mkdir -p "$HOME/.cache/pc-virtual"
+
+if ! pgrep -x Xvfb >/dev/null; then
+  Xvfb :0 -screen 0 1920x1080x24 -ac &
+  sleep 3
+fi
+
+if ! pgrep -f "xfce4-session" >/dev/null; then
+  dbus-launch --exit-with-session startxfce4 \
+    >"$HOME/.cache/pc-virtual/desktop.log" 2>&1 &
+  sleep 3
+fi
+
+if ! pgrep -x x11vnc >/dev/null; then
+  x11vnc \
+    -display :0 \
+    -forever \
+    -shared \
+    -nopw \
+    -listen 127.0.0.1 \
+    -rfbport 5900 &
+fi
+
+if ! pgrep -f "websockify.*6080" >/dev/null; then
+  websockify \
+    --web=/usr/share/novnc \
+    6080 \
+    127.0.0.1:5900 &
+fi
+
+echo "PC Virtual Ultra iniciado."
+echo "Desktop: porta privada 6080."
+echo "Terminal: abra um novo terminal no Codespaces."
+
+wait
